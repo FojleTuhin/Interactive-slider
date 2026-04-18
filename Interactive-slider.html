@@ -1,0 +1,484 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Interactive slider</title>
+
+    <style>
+      body {
+        height: 100vh;
+        margin: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        box-sizing: border-box;
+      }
+      .main {
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.24);
+        background: #fff;
+        box-shadow: 0 3px 12px 4px var(--Shadow-Secondary, rgba(0, 0, 0, 0.16));
+        width: 248px;
+        height: 200px;
+        display: flex;
+        align-items: center;
+        box-sizing: border-box;
+      }
+      .container {
+        width: 248px;
+        height: 24px;
+        padding: 0 16px;
+        display: flex;
+        gap: 8px;
+      }
+      .label {
+        width: 64px;
+        min-width: 64px;
+        height: 100%;
+        display: flex;
+        align-items: center;
+      }
+      .text {
+        color: rgba(0, 0, 0, 0.56);
+        font-family: Inter;
+        font-size: 11px;
+        font-style: normal;
+        font-weight: 500;
+        line-height: 16px;
+        letter-spacing: -0.2px;
+        margin: 0px;
+      }
+      .slider {
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.04);
+        border-radius: 6px;
+        position: relative;
+        cursor: default;
+        user-select: none;
+        -webkit-user-select: none;
+      }
+      /* Input mode: blue border, white bg */
+      .slider.input-mode {
+        border: 1px solid #167bff;
+        background: #fff;
+        cursor: text;
+      }
+
+      .bg {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        max-width: 114px;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        border-bottom-left-radius: 6px;
+        border-top-left-radius: 6px;
+        overflow: visible;
+      }
+      .slider.input-mode .bg {
+        max-width: 100%;
+        border-radius: 5px;
+      }
+
+      .sliderHandleWrapper {
+        display: flex;
+        align-items: center;
+        width: 0%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.01);
+        transition: width 0.3s ease-out;
+        flex-shrink: 0;
+      }
+      .sliderHandleWrapper.no-transition {
+        transition: none;
+      }
+      .slider.input-mode .sliderHandleWrapper {
+        display: none;
+      }
+
+      .handle {
+        width: 2px;
+        min-width: 2px;
+        border: 2px solid #fff;
+        height: 26px;
+        border-radius: 30px;
+        background-image: linear-gradient(
+          0deg,
+          rgba(0, 0, 0, 0.12),
+          rgba(0, 0, 0, 0.12)
+        );
+        background-color: #ebebeb;
+        transition: background-color 0.3s ease-out;
+        flex-shrink: 0;
+      }
+      .handle:hover {
+        background-color: #167bff;
+      }
+      .slider.dragging .handle {
+        background-color: #167bff;
+      }
+
+      .sliderValueWidth {
+        flex: 1;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        background: rgba(22, 123, 255, 0.12);
+        border-top-left-radius: 6px;
+        border-bottom-left-radius: 6px;
+      }
+
+      .value {
+        position: absolute;
+        left: 8px;
+        top: 50%;
+        transform: translateY(-50%);
+        z-index: 2;
+        pointer-events: none;
+        overflow: hidden;
+        color: #000;
+        text-overflow: ellipsis;
+        font-family: Inter;
+        font-size: 11px;
+        font-style: normal;
+        font-weight: 400;
+        line-height: 14px;
+        letter-spacing: 0.1px;
+        margin: 0;
+        white-space: nowrap;
+      }
+      .slider.input-mode .value {
+        display: none;
+      }
+
+      .value-input {
+        position: absolute;
+        left: 8px;
+        right: 26px;
+        top: 50%;
+        transform: translateY(-50%);
+        z-index: 2;
+        display: none;
+        border: none;
+        outline: none;
+        background: transparent;
+        font-family: Inter;
+        font-size: 11px;
+        font-style: normal;
+        font-weight: 400;
+        line-height: 14px;
+        letter-spacing: 0.1px;
+        color: #000;
+        padding: 0;
+        margin: 0;
+        width: calc(100% - 34px);
+        -moz-appearance: textfield;
+      }
+      .value-input::-webkit-inner-spin-button,
+      .value-input::-webkit-outer-spin-button {
+        -webkit-appearance: none;
+      }
+      .slider.input-mode .value-input {
+        display: block;
+      }
+
+      .valueWrapper {
+        position: absolute;
+        right: 2px;
+        top: 50%;
+        transform: translateY(-50%);
+        display: flex;
+        align-items: center;
+        z-index: 10;
+      }
+
+      .unitSelectorWrapper {
+        width: 20px;
+        height: 20px;
+        border-radius: 4px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        position: relative;
+      }
+      .unitSelectorWrapper:hover {
+        background: rgba(0, 0, 0, 0.06);
+      }
+
+      .unitText {
+        color: rgba(0, 0, 0, 0.56);
+        font-family: Inter;
+        font-size: 9px;
+        font-style: normal;
+        font-weight: 500;
+        line-height: 12px;
+        letter-spacing: 0.1px;
+        margin: 0;
+        cursor: pointer;
+      }
+
+      /* ── Unit dropdown popup ── */
+      .unitWrapper {
+        position: absolute;
+        bottom: calc(100% + 6px);
+        right: 0;
+        background: white;
+        padding: 5px;
+        border-radius: 10px;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
+        border: 1px solid rgba(0, 0, 0, 0.07);
+        display: none;
+        z-index: 100;
+        min-width: 52px;
+      }
+      .unitWrapper.open {
+        display: block;
+      }
+      .unitOption {
+        color: rgba(0, 0, 0, 0.72);
+        font-family: Inter;
+        font-size: 10px;
+        font-weight: 500;
+        line-height: 12px;
+        letter-spacing: 0.1px;
+        margin: 0;
+        padding: 5px 8px;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: background 0.1s;
+      }
+      .unitOption:hover {
+        background: rgba(0, 0, 0, 0.05);
+      }
+      .unitOption.active {
+        color: #167bff;
+        background: rgba(22, 123, 255, 0.08);
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="main">
+      <div class="container">
+        <div class="label">
+          <p class="text">Radius</p>
+        </div>
+
+        <div class="slider" id="slider">
+          <div class="bg" id="bg">
+            <div class="sliderHandleWrapper" id="sliderHandleWrapper">
+              <div class="sliderValueWidth">
+                <div class="handle" id="handle"></div>
+              </div>
+            </div>
+
+            <p class="value" id="valueDisplay">0</p>
+
+            <!-- input shown only in input-mode -->
+            <input
+              class="value-input"
+              id="valueInput"
+              type="number"
+              min="0"
+              max="999"
+              value="0"
+            />
+          </div>
+
+          <div class="valueWrapper">
+            <div class="unitSelectorWrapper" id="unitSelectorWrapper">
+              <p class="unitText" id="unitText">px</p>
+              <div class="unitWrapper" id="unitWrapper"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const slider = document.getElementById("slider");
+      const bg = document.getElementById("bg");
+      const handleWrapper = document.getElementById("sliderHandleWrapper");
+      const handle = document.getElementById("handle");
+      const valueDisplay = document.getElementById("valueDisplay");
+      const valueInput = document.getElementById("valueInput");
+      const unitSelectorWrap = document.getElementById("unitSelectorWrapper");
+      const unitTextEl = document.getElementById("unitText");
+      const unitWrapper = document.getElementById("unitWrapper");
+
+      // ── State ───────────────────────────────────────────────────
+      let currentValue = 0;
+      let currentUnit = "px";
+      let isInputMode = false;
+      let isDragging = false;
+
+      const DRAG_MAX = 100;
+      const INPUT_MAX = 999;
+
+      // handle total visual width = width(2px) + border-left(2px) + border-right(2px) = 6px
+      // so half = 3px. We offset so the handle's center sits on the cursor.
+      const HANDLE_HALF = handle.offsetWidth / 2;
+
+      // ── Helpers ─────────────────────────────────────────────────
+
+      // Convert value (0–DRAG_MAX) → px width of handleWrapper
+      // handleWrapper lives inside bg; bg.offsetWidth is the true container width.
+      function valueToPx(val) {
+        return (Math.min(val, DRAG_MAX) / DRAG_MAX) * bg.offsetWidth;
+      }
+
+      // Set handleWrapper to a fixed px width (no transition)
+      function setHandlePx(px) {
+        handleWrapper.classList.add("no-transition");
+        handleWrapper.style.width =
+          Math.max(0, Math.min(px, bg.offsetWidth)) + "px";
+        requestAnimationFrame(() =>
+          handleWrapper.classList.remove("no-transition"),
+        );
+      }
+
+      // ── Unit popup ──────────────────────────────────────────────
+      ["px", "%", "em", "rem"].forEach((unit) => {
+        const p = document.createElement("p");
+        p.className = "unitOption" + (unit === currentUnit ? " active" : "");
+        p.textContent = unit;
+        p.addEventListener("mousedown", (e) => e.stopPropagation());
+        p.addEventListener("click", (e) => {
+          e.stopPropagation();
+          currentUnit = unit;
+          unitTextEl.textContent = unit;
+          unitWrapper
+            .querySelectorAll(".unitOption")
+            .forEach((el) =>
+              el.classList.toggle("active", el.textContent === unit),
+            );
+          unitWrapper.classList.remove("open");
+        });
+        unitWrapper.appendChild(p);
+      });
+
+      unitSelectorWrap.addEventListener("mousedown", (e) =>
+        e.stopPropagation(),
+      );
+      unitSelectorWrap.addEventListener("click", (e) => {
+        e.stopPropagation();
+        unitWrapper.classList.toggle("open");
+      });
+      document.addEventListener("click", () =>
+        unitWrapper.classList.remove("open"),
+      );
+
+      // ── Hover: handle center follows cursor; value unchanged ─────
+      // handleWrapper width = cursorX_from_bg_left + HANDLE_HALF
+      // because handle sits at the RIGHT edge of handleWrapper,
+      // so center = wrapperWidth - HANDLE_HALF → wrapperWidth = cursorX + HANDLE_HALF
+      slider.addEventListener("mousemove", (e) => {
+        if (isInputMode || isDragging) return;
+        const bgRect = bg.getBoundingClientRect();
+        const x = e.clientX - bgRect.left + HANDLE_HALF;
+        handleWrapper.style.width =
+          Math.max(0, Math.min(x, bgRect.width)) + "px";
+      });
+
+      slider.addEventListener("mouseleave", () => {
+        if (isInputMode || isDragging) return;
+        handleWrapper.classList.remove("no-transition");
+        handleWrapper.style.width = valueToPx(currentValue) + "px";
+      });
+
+      // ── Mousedown: click vs drag ────────────────────────────────
+      slider.addEventListener("mousedown", (e) => {
+        if (isInputMode) return;
+        if (unitSelectorWrap.contains(e.target)) return;
+        e.preventDefault();
+
+        const startX = e.clientX;
+        let didDrag = false;
+
+        const onMove = (ev) => {
+          if (!didDrag && Math.abs(ev.clientX - startX) < 4) return;
+
+          if (!didDrag) {
+            didDrag = true;
+            isDragging = true;
+            slider.classList.add("dragging");
+            handleWrapper.classList.add("no-transition");
+            document.body.style.cursor = "ew-resize";
+          }
+
+          const bgRect = bg.getBoundingClientRect();
+          const rawPx = ev.clientX - bgRect.left + HANDLE_HALF;
+          const clampPx = Math.max(0, Math.min(rawPx, bgRect.width));
+          const pct = clampPx / bgRect.width; // 0–1
+          const val = Math.round(pct * DRAG_MAX); // 0–100
+
+          currentValue = val;
+          valueDisplay.textContent = val;
+          handleWrapper.style.width = clampPx + "px";
+        };
+
+        const onUp = () => {
+          document.removeEventListener("mousemove", onMove);
+          document.removeEventListener("mouseup", onUp);
+
+          if (isDragging) {
+            isDragging = false;
+            slider.classList.remove("dragging");
+            handleWrapper.classList.remove("no-transition");
+            document.body.style.cursor = "";
+          } else {
+            enterInputMode();
+          }
+        };
+
+        document.addEventListener("mousemove", onMove);
+        document.addEventListener("mouseup", onUp);
+      });
+
+      // ── Input mode ──────────────────────────────────────────────
+      function enterInputMode() {
+        isInputMode = true;
+        slider.classList.add("input-mode");
+        valueInput.value = currentValue;
+        requestAnimationFrame(() => {
+          valueInput.focus();
+          valueInput.select();
+        });
+      }
+
+      function exitInputMode(commit) {
+        if (!isInputMode) return;
+        isInputMode = false;
+        slider.classList.remove("input-mode");
+
+        if (commit) {
+          let val = parseInt(valueInput.value, 10);
+          if (isNaN(val) || val < 0) val = 0;
+          if (val > INPUT_MAX) val = INPUT_MAX;
+          currentValue = val;
+        }
+
+        valueDisplay.textContent = currentValue;
+        setHandlePx(valueToPx(currentValue));
+      }
+
+      valueInput.addEventListener("mousedown", (e) => e.stopPropagation());
+      valueInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") exitInputMode(true);
+        if (e.key === "Escape") exitInputMode(false);
+      });
+      valueInput.addEventListener("blur", () => {
+        if (isInputMode) exitInputMode(true);
+      });
+      valueInput.addEventListener("input", () => {
+        const n = parseInt(valueInput.value, 10);
+        if (!isNaN(n) && n > INPUT_MAX) valueInput.value = INPUT_MAX;
+        if (!isNaN(n) && n < 0) valueInput.value = 0;
+      });
+    </script>
+  </body>
+</html>
