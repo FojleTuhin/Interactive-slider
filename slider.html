@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Interactive slider</title>
+    <title> slider</title>
 
     <style>
       body {
@@ -70,7 +70,6 @@
         position: absolute;
         inset: 0;
         width: 100%;
-        max-width: 114px;
         height: 100%;
         display: flex;
         align-items: center;
@@ -79,7 +78,6 @@
         overflow: visible;
       }
       .slider.input-mode .bg {
-        max-width: 100%;
         border-radius: 5px;
       }
 
@@ -127,9 +125,13 @@
         display: flex;
         align-items: center;
         justify-content: flex-end;
-        background: rgba(22, 123, 255, 0.12);
+        background: rgba(0, 0, 0, 0.04);
         border-top-left-radius: 6px;
         border-bottom-left-radius: 6px;
+      }
+      .slider.dragging .sliderValueWidth {
+        /* background: #167bff; */
+        background: rgba(22, 123, 255, 0.08);
       }
 
       .value {
@@ -259,26 +261,10 @@
         color: #167bff;
         background: rgba(22, 123, 255, 0.08);
       }
-
-
-      .pageLink{
-        position: absolute;
-        top: 16px;
-        right: 16px;
-        color: rgba(0, 0, 0, 0.56);
-        font-family: Inter;
-        font-size: 24px;
-        font-style: normal;
-        font-weight: 500;
-        line-height: 16px;
-        letter-spacing: -0.2px;
-        text-decoration: none;
-      }
     </style>
   </head>
 
   <body>
-    <a href="./slider.html" class="pageLink">2</a>
     <div class="main">
       <div class="container">
         <div class="label">
@@ -388,24 +374,6 @@
       document.addEventListener("click", () =>
         unitWrapper.classList.remove("open"),
       );
-
-      // ── Hover: handle center follows cursor; value unchanged ─────
-      // handleWrapper width = cursorX_from_bg_left + HANDLE_HALF
-      // because handle sits at the RIGHT edge of handleWrapper,
-      // so center = wrapperWidth - HANDLE_HALF → wrapperWidth = cursorX + HANDLE_HALF
-      slider.addEventListener("mousemove", (e) => {
-        if (isInputMode || isDragging) return;
-        const bgRect = bg.getBoundingClientRect();
-        const x = e.clientX - bgRect.left + HANDLE_HALF;
-        handleWrapper.style.width =
-          Math.max(0, Math.min(x, bgRect.width)) + "px";
-      });
-
-      slider.addEventListener("mouseleave", () => {
-        if (isInputMode || isDragging) return;
-        handleWrapper.classList.remove("no-transition");
-        handleWrapper.style.width = valueToPx(currentValue) + "px";
-      });
 
       // ── Mousedown: click vs drag ────────────────────────────────
       slider.addEventListener("mousedown", (e) => {
