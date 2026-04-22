@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Interactive slider</title>
+    <title> slider</title>
 
     <style>
       body {
@@ -70,7 +70,6 @@
         position: absolute;
         inset: 0;
         width: 100%;
-        max-width: 114px;
         height: 100%;
         display: flex;
         align-items: center;
@@ -79,8 +78,28 @@
         overflow: visible;
       }
       .slider.input-mode .bg {
-        max-width: 100%;
         border-radius: 5px;
+      }
+
+      /* ── Hover track ── */
+      .hover-track {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 0;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.04);
+         border-bottom-left-radius: 6px;
+        border-top-left-radius: 6px;
+        pointer-events: none;
+        z-index: 0;
+      }
+      .hover-track.hover-in {
+        transition: width 0.2s ease-out;
+      }
+      .slider.input-mode .hover-track,
+      .slider.dragging .hover-track {
+        display: none;
       }
 
       .sliderHandleWrapper {
@@ -127,9 +146,12 @@
         display: flex;
         align-items: center;
         justify-content: flex-end;
-        background: rgba(22, 123, 255, 0.12);
+        background: rgba(0, 0, 0, 0.04);
         border-top-left-radius: 6px;
         border-bottom-left-radius: 6px;
+      }
+      .slider.dragging .sliderValueWidth {
+        background: rgba(22, 123, 255, 0.08);
       }
 
       .value {
@@ -176,7 +198,6 @@
         padding: 0;
         margin: 0;
         width: calc(100% - 34px);
-        /* cursor: text; */
         -moz-appearance: textfield;
       }
       .value-input::-webkit-inner-spin-button,
@@ -259,30 +280,10 @@
         color: #167bff;
         background: rgba(22, 123, 255, 0.08);
       }
-
-      .pageLink {
-        position: absolute;
-        display: flex;
-        gap: 20px;
-        top: 16px;
-        right: 16px;
-        color: rgba(0, 0, 0, 0.56);
-        font-family: Inter;
-        font-size: 24px;
-        font-style: normal;
-        font-weight: 500;
-        line-height: 16px;
-        letter-spacing: -0.2px;
-        text-decoration: none;
-      }
     </style>
   </head>
 
   <body>
-    <div class="pageLink">
-      <a href="./slider.html">2</a>
-      <a href="./hover.html">3</a>
-    </div>
     <div class="main">
       <div class="container">
         <div class="label">
@@ -291,6 +292,9 @@
 
         <div class="slider" id="slider">
           <div class="bg" id="bg">
+            <!-- Hover track: grows with cursor on hover -->
+            <div class="hover-track" id="hoverTrack"></div>
+
             <div class="sliderHandleWrapper" id="sliderHandleWrapper">
               <div class="sliderValueWidth">
                 <div class="handle" id="handle"></div>
@@ -330,6 +334,7 @@
       const unitSelectorWrap = document.getElementById("unitSelectorWrapper");
       const unitTextEl = document.getElementById("unitText");
       const unitWrapper = document.getElementById("unitWrapper");
+      const hoverTrack = document.getElementById("hoverTrack");
 
       // ── State ───────────────────────────────────────────────────
       let currentValue = 0;
@@ -340,19 +345,14 @@
       const DRAG_MAX = 100;
       const INPUT_MAX = 999;
 
-      // handle total visual width = width(2px) + border-left(2px) + border-right(2px) = 6px
-      // so half = 3px. We offset so the handle's center sits on the cursor.
       const HANDLE_HALF = handle.offsetWidth / 2;
 
       // ── Helpers ─────────────────────────────────────────────────
 
-      // Convert value (0–DRAG_MAX) → px width of handleWrapper
-      // handleWrapper lives inside bg; bg.offsetWidth is the true container width.
       function valueToPx(val) {
         return (Math.min(val, DRAG_MAX) / DRAG_MAX) * bg.offsetWidth;
       }
 
-      // Set handleWrapper to a fixed px width (no transition)
       function setHandlePx(px) {
         handleWrapper.classList.add("no-transition");
         handleWrapper.style.width =
@@ -361,6 +361,33 @@
           handleWrapper.classList.remove("no-transition"),
         );
       }
+
+      // ── Hover track ─────────────────────────────────────────────
+      // On hover-in: animate from 0 to cursor position once
+      slider.addEventListener("mouseenter", (e) => {
+        if (isInputMode || isDragging) return;
+        const bgRect = bg.getBoundingClientRect();
+        const clampPx = Math.max(0, Math.min(e.clientX - bgRect.left, bgRect.width));
+        hoverTrack.classList.add("hover-in");
+        hoverTrack.style.width = clampPx + "px";
+      });
+
+      // After enter transition ends, remove class → mousemove becomes instant
+      hoverTrack.addEventListener("transitionend", () => {
+        hoverTrack.classList.remove("hover-in");
+      });
+
+      // While moving: instant follow (no transition class)
+      slider.addEventListener("mousemove", (e) => {
+        if (isInputMode || isDragging) return;
+        const bgRect = bg.getBoundingClientRect();
+        const clampPx = Math.max(0, Math.min(e.clientX - bgRect.left, bgRect.width));
+        hoverTrack.style.width = clampPx + "px";
+      });
+
+      slider.addEventListener("mouseleave", () => {
+        hoverTrack.style.width = "0px";
+      });
 
       // ── Unit popup ──────────────────────────────────────────────
       ["px", "%", "em", "rem"].forEach((unit) => {
@@ -393,24 +420,6 @@
         unitWrapper.classList.remove("open"),
       );
 
-      // ── Hover: handle center follows cursor; value unchanged ─────
-      // handleWrapper width = cursorX_from_bg_left + HANDLE_HALF
-      // because handle sits at the RIGHT edge of handleWrapper,
-      // so center = wrapperWidth - HANDLE_HALF → wrapperWidth = cursorX + HANDLE_HALF
-      slider.addEventListener("mousemove", (e) => {
-        if (isInputMode || isDragging) return;
-        const bgRect = bg.getBoundingClientRect();
-        const x = e.clientX - bgRect.left + HANDLE_HALF;
-        handleWrapper.style.width =
-          Math.max(0, Math.min(x, bgRect.width)) + "px";
-      });
-
-      slider.addEventListener("mouseleave", () => {
-        if (isInputMode || isDragging) return;
-        handleWrapper.classList.remove("no-transition");
-        handleWrapper.style.width = valueToPx(currentValue) + "px";
-      });
-
       // ── Mousedown: click vs drag ────────────────────────────────
       slider.addEventListener("mousedown", (e) => {
         if (isInputMode) return;
@@ -429,13 +438,14 @@
             slider.classList.add("dragging");
             handleWrapper.classList.add("no-transition");
             document.body.style.cursor = "ew-resize";
+            hoverTrack.style.width = "0px"; // hide hover track while dragging
           }
 
           const bgRect = bg.getBoundingClientRect();
           const rawPx = ev.clientX - bgRect.left + HANDLE_HALF;
           const clampPx = Math.max(0, Math.min(rawPx, bgRect.width));
-          const pct = clampPx / bgRect.width; // 0–1
-          const val = Math.round(pct * DRAG_MAX); // 0–100
+          const pct = clampPx / bgRect.width;
+          const val = Math.round(pct * DRAG_MAX);
 
           currentValue = val;
           valueDisplay.textContent = val;
@@ -464,6 +474,7 @@
       function enterInputMode() {
         isInputMode = true;
         slider.classList.add("input-mode");
+        hoverTrack.style.width = "0px"; // hide hover track in input mode
         valueInput.value = currentValue;
         requestAnimationFrame(() => {
           valueInput.focus();
