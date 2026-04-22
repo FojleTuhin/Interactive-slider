@@ -87,6 +87,7 @@
         left: 0;
         top: 0;
         width: 0;
+        max-width: 114px;
         height: 100%;
         background: rgba(0, 0, 0, 0.04);
          border-bottom-left-radius: 6px;
@@ -94,9 +95,9 @@
         pointer-events: none;
         z-index: 0;
       }
-      .hover-track.hover-in {
-        transition: width 0.2s ease-out;
-      }
+      /* .hover-track.hover-in {
+        transition: width 0.05s ease-out;
+      } */
       .slider.input-mode .hover-track,
       .slider.dragging .hover-track {
         display: none;
@@ -130,7 +131,7 @@
           rgba(0, 0, 0, 0.12)
         );
         background-color: #ebebeb;
-        transition: background-color 0.3s ease-out;
+        /* transition: background-color 0.3s ease-out; */
         flex-shrink: 0;
       }
       .handle:hover {
@@ -160,7 +161,7 @@
         top: 50%;
         transform: translateY(-50%);
         z-index: 2;
-        pointer-events: none;
+        /* pointer-events: none; */
         overflow: hidden;
         color: #000;
         text-overflow: ellipsis;
@@ -172,6 +173,7 @@
         letter-spacing: 0.1px;
         margin: 0;
         white-space: nowrap;
+        cursor: pointer;
       }
       .slider.input-mode .value {
         display: none;
