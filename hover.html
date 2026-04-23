@@ -3,9 +3,17 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title> slider</title>
+    <title>slider</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap"
+      rel="stylesheet"
+    />
+    
 
     <style>
+      
       body {
         height: 100vh;
         margin: 0;
@@ -13,6 +21,7 @@
         justify-content: center;
         align-items: center;
         box-sizing: border-box;
+        font-family: inter;
       }
       .main {
         border-radius: 12px;
@@ -90,7 +99,7 @@
         max-width: 114px;
         height: 100%;
         background: rgba(0, 0, 0, 0.04);
-         border-bottom-left-radius: 6px;
+        border-bottom-left-radius: 6px;
         border-top-left-radius: 6px;
         pointer-events: none;
         z-index: 0;
@@ -133,6 +142,7 @@
         background-color: #ebebeb;
         /* transition: background-color 0.3s ease-out; */
         flex-shrink: 0;
+        cursor: grab;
       }
       .handle:hover {
         background-color: #167bff;
@@ -173,7 +183,7 @@
         letter-spacing: 0.1px;
         margin: 0;
         white-space: nowrap;
-        cursor: pointer;
+        cursor: text;
       }
       .slider.input-mode .value {
         display: none;
@@ -231,6 +241,10 @@
       }
       .unitSelectorWrapper:hover {
         background: rgba(0, 0, 0, 0.06);
+      }
+
+      .unitSelectorWrapper:hover.hover-track{
+        display: none;
       }
 
       .unitText {
@@ -369,9 +383,13 @@
       slider.addEventListener("mouseenter", (e) => {
         if (isInputMode || isDragging) return;
         const bgRect = bg.getBoundingClientRect();
-        const clampPx = Math.max(0, Math.min(e.clientX - bgRect.left, bgRect.width));
+        const clampPx = Math.max(
+          0,
+          Math.min(e.clientX - bgRect.left, bgRect.width),
+        );
         hoverTrack.classList.add("hover-in");
         hoverTrack.style.width = clampPx + "px";
+        
       });
 
       // After enter transition ends, remove class → mousemove becomes instant
@@ -383,7 +401,10 @@
       slider.addEventListener("mousemove", (e) => {
         if (isInputMode || isDragging) return;
         const bgRect = bg.getBoundingClientRect();
-        const clampPx = Math.max(0, Math.min(e.clientX - bgRect.left, bgRect.width));
+        const clampPx = Math.max(
+          0,
+          Math.min(e.clientX - bgRect.left, bgRect.width),
+        );
         hoverTrack.style.width = clampPx + "px";
       });
 
