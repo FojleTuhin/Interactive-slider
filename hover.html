@@ -10,10 +10,8 @@
       href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap"
       rel="stylesheet"
     />
-    
 
     <style>
-      
       body {
         height: 100vh;
         margin: 0;
@@ -40,6 +38,7 @@
         padding: 0 16px;
         display: flex;
         gap: 8px;
+        box-sizing: border-box;
       }
       .label {
         width: 64px;
@@ -104,9 +103,7 @@
         pointer-events: none;
         z-index: 0;
       }
-      /* .hover-track.hover-in {
-        transition: width 0.05s ease-out;
-      } */
+
       .slider.input-mode .hover-track,
       .slider.dragging .hover-track {
         display: none;
@@ -140,7 +137,6 @@
           rgba(0, 0, 0, 0.12)
         );
         background-color: #ebebeb;
-        /* transition: background-color 0.3s ease-out; */
         flex-shrink: 0;
         cursor: grab;
       }
@@ -243,8 +239,8 @@
         background: rgba(0, 0, 0, 0.06);
       }
 
-      .unitSelectorWrapper:hover.hover-track{
-        display: none;
+      .slider:has(.valueWrapper:hover) .hover-track {
+        display: none !important;
       }
 
       .unitText {
@@ -389,7 +385,6 @@
         );
         hoverTrack.classList.add("hover-in");
         hoverTrack.style.width = clampPx + "px";
-        
       });
 
       // After enter transition ends, remove class → mousemove becomes instant
