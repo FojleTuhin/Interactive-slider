@@ -3,7 +3,13 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Interactive slider</title>
+    <title>slider</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap"
+      rel="stylesheet"
+    />
 
     <style>
       body {
@@ -13,7 +19,7 @@
         justify-content: center;
         align-items: center;
         box-sizing: border-box;
-        /* font-family: inter; */
+        font-family: Inter;
       }
       .main {
         border-radius: 12px;
@@ -32,6 +38,7 @@
         padding: 0 16px;
         display: flex;
         gap: 8px;
+        box-sizing: border-box;
       }
       .label {
         width: 64px;
@@ -71,36 +78,59 @@
         position: absolute;
         inset: 0;
         width: 100%;
-        max-width: 114px;
         height: 100%;
-        display: flex;
-        align-items: center;
-        border-bottom-left-radius: 6px;
-        border-top-left-radius: 6px;
+        border-radius: 6px;
         overflow: visible;
       }
       .slider.input-mode .bg {
-        max-width: 100%;
         border-radius: 5px;
       }
 
-      .sliderHandleWrapper {
-        display: flex;
-        align-items: center;
-        width: 0%;
+      /* ── Hover track (previews fill from center towards cursor) ── */
+      .hover-track {
+        position: absolute;
+        top: 0;
+        left: 50%;
+        width: 0;
         height: 100%;
-        background: rgba(0, 0, 0, 0.01);
-        transition: width 0.3s ease-out;
-        flex-shrink: 0;
+        background: rgba(0, 0, 0, 0.04);
+        border-radius: 6px;
+        pointer-events: none;
+        z-index: 0;
       }
-      .sliderHandleWrapper.no-transition {
-        transition: none;
-      }
-      .slider.input-mode .sliderHandleWrapper {
+
+      .slider.input-mode .hover-track,
+      .slider.dragging .hover-track {
         display: none;
       }
 
+      /* ── Fill bar: grows from center toward the handle, either direction ── */
+      .fill {
+        position: absolute;
+        top: 0;
+        left: 50%;
+        width: 0;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.04);
+        border-radius: 6px;
+        transition: left 0.3s ease-out, width 0.3s ease-out;
+        pointer-events: none;
+        z-index: 0;
+      }
+      .fill.no-transition {
+        transition: none;
+      }
+      .slider.input-mode .fill {
+        display: none;
+      }
+      .slider.dragging .fill {
+        background: rgba(22, 123, 255, 0.08);
+      }
+
       .handle {
+        position: absolute;
+        top: 50%;
+        left: 50%;
         width: 2px;
         min-width: 2px;
         border: 2px solid #fff;
@@ -112,8 +142,13 @@
           rgba(0, 0, 0, 0.12)
         );
         background-color: #ebebeb;
-        transition: background-color 0.3s ease-out;
-        flex-shrink: 0;
+        transform: translate(-50%, -50%);
+        transition: left 0.3s ease-out;
+        cursor: grab;
+        z-index: 1;
+      }
+      .handle.no-transition {
+        transition: none;
       }
       .handle:hover {
         background-color: #167bff;
@@ -121,16 +156,8 @@
       .slider.dragging .handle {
         background-color: #167bff;
       }
-
-      .sliderValueWidth {
-        flex: 1;
-        height: 100%;
-        display: flex;
-        align-items: center;
-        justify-content: flex-end;
-        background: rgba(22, 123, 255, 0.12);
-        border-top-left-radius: 6px;
-        border-bottom-left-radius: 6px;
+      .slider.input-mode .handle {
+        display: none;
       }
 
       .value {
@@ -139,7 +166,7 @@
         top: 50%;
         transform: translateY(-50%);
         z-index: 2;
-        pointer-events: none;
+        /* pointer-events: none; */
         overflow: hidden;
         color: #000;
         text-overflow: ellipsis;
@@ -151,6 +178,7 @@
         letter-spacing: 0.1px;
         margin: 0;
         white-space: nowrap;
+        cursor: text;
       }
       .slider.input-mode .value {
         display: none;
@@ -177,8 +205,8 @@
         padding: 0;
         margin: 0;
         width: calc(100% - 34px);
-        /* cursor: text; */
         -moz-appearance: textfield;
+        appearance: textfield;
       }
       .value-input::-webkit-inner-spin-button,
       .value-input::-webkit-outer-spin-button {
@@ -209,6 +237,10 @@
       }
       .unitSelectorWrapper:hover {
         background: rgba(0, 0, 0, 0.06);
+      }
+
+      .slider:has(.valueWrapper:hover) .hover-track {
+        display: none !important;
       }
 
       .unitText {
@@ -260,32 +292,10 @@
         color: #167bff;
         background: rgba(22, 123, 255, 0.08);
       }
-
-      .pageLink {
-        position: absolute;
-        display: flex;
-        gap: 20px;
-        top: 16px;
-        right: 16px;
-        color: rgba(0, 0, 0, 0.56);
-        font-family: Inter;
-        font-size: 24px;
-        font-style: normal;
-        font-weight: 500;
-        line-height: 16px;
-        letter-spacing: -0.2px;
-        text-decoration: none;
-      }
     </style>
   </head>
 
   <body>
-    <div class="pageLink">
-      <a href="./slider.html">2</a>
-      <a href="./hover.html">3</a>
-      <a href="./nagative.html">Negative</a>
-      <a href="./Optimize.html">Negative</a>
-    </div>
     <div class="main">
       <div class="container">
         <div class="label">
@@ -294,11 +304,14 @@
 
         <div class="slider" id="slider">
           <div class="bg" id="bg">
-            <div class="sliderHandleWrapper" id="sliderHandleWrapper">
-              <div class="sliderValueWidth">
-                <div class="handle" id="handle"></div>
-              </div>
-            </div>
+            <!-- Hover track: previews fill from center to cursor -->
+            <div class="hover-track" id="hoverTrack"></div>
+
+            <!-- Fill: grows from center toward the handle position -->
+            <div class="fill" id="fill"></div>
+
+            <!-- Handle: sits at the current value's position -->
+            <div class="handle" id="handle"></div>
 
             <p class="value" id="valueDisplay">0</p>
 
@@ -307,8 +320,8 @@
               class="value-input"
               id="valueInput"
               type="number"
-              min="0"
-              max="999"
+              min="-100"
+              max="100"
               value="0"
             />
           </div>
@@ -326,44 +339,109 @@
     <script>
       const slider = document.getElementById("slider");
       const bg = document.getElementById("bg");
-      const handleWrapper = document.getElementById("sliderHandleWrapper");
+      const fill = document.getElementById("fill");
       const handle = document.getElementById("handle");
       const valueDisplay = document.getElementById("valueDisplay");
       const valueInput = document.getElementById("valueInput");
       const unitSelectorWrap = document.getElementById("unitSelectorWrapper");
       const unitTextEl = document.getElementById("unitText");
       const unitWrapper = document.getElementById("unitWrapper");
+      const hoverTrack = document.getElementById("hoverTrack");
 
       // ── State ───────────────────────────────────────────────────
-      let currentValue = 0;
+      let currentValue = 0; // range: -DRAG_MAX .. +DRAG_MAX, 0 = center
       let currentUnit = "px";
       let isInputMode = false;
       let isDragging = false;
 
-      const DRAG_MAX = 100;
-      const INPUT_MAX = 999;
-
-      // handle total visual width = width(2px) + border-left(2px) + border-right(2px) = 6px
-      // so half = 3px. We offset so the handle's center sits on the cursor.
-      const HANDLE_HALF = handle.offsetWidth / 2;
+      const DRAG_MAX = 100; // magnitude, both directions
+      const INPUT_MIN = -100;
+      const INPUT_MAX = 100;
 
       // ── Helpers ─────────────────────────────────────────────────
 
-      // Convert value (0–DRAG_MAX) → px width of handleWrapper
-      // handleWrapper lives inside bg; bg.offsetWidth is the true container width.
-      function valueToPx(val) {
-        return (Math.min(val, DRAG_MAX) / DRAG_MAX) * bg.offsetWidth;
+      // px position of the center point (value 0) within bg
+      function centerPx() {
+        return bg.offsetWidth / 2;
       }
 
-      // Set handleWrapper to a fixed px width (no transition)
-      function setHandlePx(px) {
-        handleWrapper.classList.add("no-transition");
-        handleWrapper.style.width =
-          Math.max(0, Math.min(px, bg.offsetWidth)) + "px";
-        requestAnimationFrame(() =>
-          handleWrapper.classList.remove("no-transition"),
-        );
+      // Convert a value (-DRAG_MAX..DRAG_MAX) to an absolute x position
+      // (in px, relative to bg's left edge) where the handle should sit.
+      function valueToHandlePx(val) {
+        const half = centerPx();
+        const clamped = Math.max(-DRAG_MAX, Math.min(val, DRAG_MAX));
+        return half + (clamped / DRAG_MAX) * half;
       }
+
+      // Position the fill bar + handle for a given value.
+      // Fill always spans from the center point to the handle position,
+      // regardless of which side (positive/negative) the value is on.
+      // Pure DOM write, no transition-class handling — safe to call on
+      // every mousemove during a drag without fighting the rAF cleanup below.
+      function positionElements(val) {
+        const half = centerPx();
+        const handlePx = valueToHandlePx(val);
+        const left = Math.min(half, handlePx);
+        const width = Math.abs(handlePx - half);
+
+        fill.style.left = left + "px";
+        fill.style.width = width + "px";
+        handle.style.left = handlePx + "px";
+      }
+
+      // Same as positionElements, but also owns the "no-transition" class
+      // lifecycle for one-shot, non-drag updates (initial render, input-mode
+      // commit). Not used inside the drag loop — see onMove, which calls
+      // positionElements() directly since dragging already owns the class
+      // for the whole gesture (added on drag-start, removed on drag-end).
+      function renderValue(val, noTransition) {
+        if (noTransition) {
+          fill.classList.add("no-transition");
+          handle.classList.add("no-transition");
+        }
+
+        positionElements(val);
+
+        if (noTransition) {
+          requestAnimationFrame(() => {
+            fill.classList.remove("no-transition");
+            handle.classList.remove("no-transition");
+          });
+        }
+      }
+
+      // ── Hover track ─────────────────────────────────────────────
+      // Preview: fill grows from center toward the cursor, either direction.
+      function updateHoverTrack(clientX) {
+        const bgRect = bg.getBoundingClientRect();
+        const half = bgRect.width / 2;
+        const rawPx = clientX - bgRect.left;
+        const clampPx = Math.max(0, Math.min(rawPx, bgRect.width));
+        const left = Math.min(half, clampPx);
+        const width = Math.abs(clampPx - half);
+        hoverTrack.style.left = left + "px";
+        hoverTrack.style.width = width + "px";
+      }
+
+      slider.addEventListener("mouseenter", (e) => {
+        if (isInputMode || isDragging) return;
+        hoverTrack.classList.add("hover-in");
+        updateHoverTrack(e.clientX);
+      });
+
+      hoverTrack.addEventListener("transitionend", () => {
+        hoverTrack.classList.remove("hover-in");
+      });
+
+      slider.addEventListener("mousemove", (e) => {
+        if (isInputMode || isDragging) return;
+        updateHoverTrack(e.clientX);
+      });
+
+      slider.addEventListener("mouseleave", () => {
+        hoverTrack.style.left = centerPx() + "px";
+        hoverTrack.style.width = "0px";
+      });
 
       // ── Unit popup ──────────────────────────────────────────────
       ["px", "%", "em", "rem"].forEach((unit) => {
@@ -396,24 +474,6 @@
         unitWrapper.classList.remove("open"),
       );
 
-      // ── Hover: handle center follows cursor; value unchanged ─────
-      // handleWrapper width = cursorX_from_bg_left + HANDLE_HALF
-      // because handle sits at the RIGHT edge of handleWrapper,
-      // so center = wrapperWidth - HANDLE_HALF → wrapperWidth = cursorX + HANDLE_HALF
-      slider.addEventListener("mousemove", (e) => {
-        if (isInputMode || isDragging) return;
-        const bgRect = bg.getBoundingClientRect();
-        const x = e.clientX - bgRect.left + HANDLE_HALF;
-        handleWrapper.style.width =
-          Math.max(0, Math.min(x, bgRect.width)) + "px";
-      });
-
-      slider.addEventListener("mouseleave", () => {
-        if (isInputMode || isDragging) return;
-        handleWrapper.classList.remove("no-transition");
-        handleWrapper.style.width = valueToPx(currentValue) + "px";
-      });
-
       // ── Mousedown: click vs drag ────────────────────────────────
       slider.addEventListener("mousedown", (e) => {
         if (isInputMode) return;
@@ -430,19 +490,26 @@
             didDrag = true;
             isDragging = true;
             slider.classList.add("dragging");
-            handleWrapper.classList.add("no-transition");
+            fill.classList.add("no-transition");
+            handle.classList.add("no-transition");
             document.body.style.cursor = "ew-resize";
+            hoverTrack.style.width = "0px"; // hide hover track while dragging
           }
 
           const bgRect = bg.getBoundingClientRect();
-          const rawPx = ev.clientX - bgRect.left + HANDLE_HALF;
+          const half = bgRect.width / 2;
+          const rawPx = ev.clientX - bgRect.left;
           const clampPx = Math.max(0, Math.min(rawPx, bgRect.width));
-          const pct = clampPx / bgRect.width; // 0–1
-          const val = Math.round(pct * DRAG_MAX); // 0–100
+          const val = Math.round(((clampPx - half) / half) * DRAG_MAX);
 
-          currentValue = val;
-          valueDisplay.textContent = val;
-          handleWrapper.style.width = clampPx + "px";
+          currentValue = Math.max(-DRAG_MAX, Math.min(val, DRAG_MAX));
+          valueDisplay.textContent = currentValue;
+          // Direct write — no-transition class is already set for the whole
+          // gesture (added above on drag-start, removed in onUp), so we skip
+          // renderValue's per-call class add/remove + rAF, which used to run
+          // on every single mousemove and could occasionally race with the
+          // next event, letting the 0.3s CSS transition flash back in mid-drag.
+          positionElements(currentValue);
         };
 
         const onUp = () => {
@@ -452,7 +519,8 @@
           if (isDragging) {
             isDragging = false;
             slider.classList.remove("dragging");
-            handleWrapper.classList.remove("no-transition");
+            fill.classList.remove("no-transition");
+            handle.classList.remove("no-transition");
             document.body.style.cursor = "";
           } else {
             enterInputMode();
@@ -467,6 +535,7 @@
       function enterInputMode() {
         isInputMode = true;
         slider.classList.add("input-mode");
+        hoverTrack.style.width = "0px"; // hide hover track in input mode
         valueInput.value = currentValue;
         requestAnimationFrame(() => {
           valueInput.focus();
@@ -481,13 +550,14 @@
 
         if (commit) {
           let val = parseInt(valueInput.value, 10);
-          if (isNaN(val) || val < 0) val = 0;
+          if (isNaN(val)) val = 0;
+          if (val < INPUT_MIN) val = INPUT_MIN;
           if (val > INPUT_MAX) val = INPUT_MAX;
           currentValue = val;
         }
 
         valueDisplay.textContent = currentValue;
-        setHandlePx(valueToPx(currentValue));
+        renderValue(currentValue, true);
       }
 
       valueInput.addEventListener("mousedown", (e) => e.stopPropagation());
@@ -501,8 +571,12 @@
       valueInput.addEventListener("input", () => {
         const n = parseInt(valueInput.value, 10);
         if (!isNaN(n) && n > INPUT_MAX) valueInput.value = INPUT_MAX;
-        if (!isNaN(n) && n < 0) valueInput.value = 0;
+        if (!isNaN(n) && n < INPUT_MIN) valueInput.value = INPUT_MIN;
       });
+
+      // ── Initial render (value 0 = centered) ────────────────────
+      renderValue(currentValue, true);
+      hoverTrack.style.left = centerPx() + "px";
     </script>
   </body>
 </html>
